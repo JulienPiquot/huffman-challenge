@@ -2,6 +2,33 @@ use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
 
 #[derive(Debug)]
+struct HuffmanCode {
+    encoding_table: HashMap<char, Vec<bool>>,
+}
+
+impl HuffmanCode {
+    fn new(encoding_table: HashMap<char, Vec<bool>>) -> Self {
+        Self { encoding_table }
+    }
+
+    fn encode(&self, data: &str) -> Vec<bool> {
+        Vec::new()
+    }
+
+    fn decode(&self, data: &[bool]) -> String {
+        String::new()
+    }
+
+    fn serialize(&self) -> Vec<u8> {
+        Vec::new()
+    }
+
+    fn deserialize(data: &[u8]) -> Self {
+        Self { encoding_table: HashMap::new() }
+    }
+}
+
+#[derive(Debug)]
 enum Node {
     Leaf {
         value: char,
@@ -33,6 +60,35 @@ struct HuffmanTree {
 }
 
 impl HuffmanTree {
+
+    pub fn build_encoding_table(&self) -> HashMap<char, Vec<bool>> {
+        let mut encoding_table = HashMap::new();
+        self.walk_through_tree(&self.root, Vec::new(), &mut encoding_table);
+        encoding_table
+    }
+
+    fn walk_through_tree(
+        &self,
+        node: &Box<Node>,
+        current_path: Vec<bool>,
+        table: &mut HashMap<char, Vec<bool>>,
+    ) {
+        match node.as_ref() {
+            Node::Leaf { value, .. } => {
+                table.insert(*value, current_path);
+            }
+            Node::Internal { left, right, .. } => {
+                let mut left_path = current_path.clone();
+                left_path.push(false);
+                self.walk_through_tree(left, left_path, table);
+
+                let mut right_path = current_path;
+                right_path.push(true); 
+                self.walk_through_tree(right, right_path, table);
+            }
+        }
+    }
+
     fn new_leaf(value: char, count: i32) -> HuffmanTree {
         HuffmanTree {
             root: Box::new(Node::Leaf { value, count }),
@@ -170,5 +226,28 @@ mod tests {
             }
             _ => panic!("Expected internal node"),
         }
+    }
+
+    #[test]
+    fn test_create_encoding_table() {
+        let mut frequencies = HashMap::new();
+        frequencies.insert('a', 4);
+        frequencies.insert('b', 2);
+        frequencies.insert('c', 1);
+        frequencies.insert('d', 5);
+
+        let tree = HuffmanTree::build_tree(&frequencies);
+        let encoding_table = tree.build_encoding_table();
+
+        assert_eq!(encoding_table.len(), 4);
+        assert!(encoding_table.contains_key(&'a'));
+        assert!(encoding_table.contains_key(&'b')); 
+        assert!(encoding_table.contains_key(&'c'));
+        assert!(encoding_table.contains_key(&'d'));
+
+        assert_eq!(encoding_table[&'d'], vec![false]);
+        assert_eq!(encoding_table[&'a'], vec![true, true]);
+        assert_eq!(encoding_table[&'b'], vec![true, false, true]);
+        assert_eq!(encoding_table[&'c'], vec![true, false, false]);
     }
 }
